@@ -158,6 +158,11 @@ export class LocalRepository implements IRepository {
         fullName: 'Karthick Ramanathan',
         email: 'passenger@cloudbus.com',
         mobileNumber: '9876543210',
+        aadhaarNumber: '5489 1234 1001',
+        aadhaarVerified: true,
+        fingerprintTemplateId: 'FP-THUMB-1001',
+        city: 'Bengaluru',
+        gender: 'Male',
         biometricEnrolled: true,
         biometricType: 'SIMULATED',
         termsConsent: true,
@@ -170,6 +175,11 @@ export class LocalRepository implements IRepository {
         fullName: 'Vikram Singh',
         email: 'emergency@cloudbus.com',
         mobileNumber: '9876543211',
+        aadhaarNumber: '7823 4567 1002',
+        aadhaarVerified: true,
+        fingerprintTemplateId: 'FP-THUMB-1002',
+        city: 'Bengaluru',
+        gender: 'Male',
         biometricEnrolled: true,
         biometricType: 'SIMULATED',
         termsConsent: true,
@@ -182,6 +192,11 @@ export class LocalRepository implements IRepository {
         fullName: 'Sneha Patel',
         email: 'nearlimit@cloudbus.com',
         mobileNumber: '9876543212',
+        aadhaarNumber: '9012 3456 1003',
+        aadhaarVerified: true,
+        fingerprintTemplateId: 'FP-THUMB-1003',
+        city: 'Bengaluru',
+        gender: 'Female',
         biometricEnrolled: true,
         biometricType: 'SIMULATED',
         termsConsent: true,
@@ -459,6 +474,19 @@ export class LocalRepository implements IRepository {
 
   async getPassengerProfileByPassengerId(passengerId: string): Promise<PassengerProfile | null> {
     return this.data.passengerProfiles.find((p) => p.passengerId === passengerId) || null;
+  }
+
+  async getPassengerProfileByFingerprint(templateId: string): Promise<PassengerProfile | null> {
+    return this.data.passengerProfiles.find((p) => p.fingerprintTemplateId === templateId) || null;
+  }
+
+  async getPassengerProfileByAadhaar(aadhaarNumber: string): Promise<PassengerProfile | null> {
+    const clean = aadhaarNumber.replace(/\s+/g, '');
+    return (
+      this.data.passengerProfiles.find(
+        (p) => p.aadhaarNumber && p.aadhaarNumber.replace(/\s+/g, '') === clean
+      ) || null
+    );
   }
 
   async createPassengerProfile(profile: PassengerProfile): Promise<PassengerProfile> {

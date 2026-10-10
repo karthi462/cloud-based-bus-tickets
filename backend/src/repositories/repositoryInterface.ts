@@ -28,6 +28,8 @@ export interface IRepository {
   // Passenger Profiles
   getPassengerProfileByUserId(userId: string): Promise<PassengerProfile | null>;
   getPassengerProfileByPassengerId(passengerId: string): Promise<PassengerProfile | null>;
+  getPassengerProfileByFingerprint(templateId: string): Promise<PassengerProfile | null>;
+  getPassengerProfileByAadhaar(aadhaarNumber: string): Promise<PassengerProfile | null>;
   createPassengerProfile(profile: PassengerProfile): Promise<PassengerProfile>;
   updatePassengerProfile(userId: string, updates: Partial<PassengerProfile>): Promise<PassengerProfile | null>;
   listPassengerProfiles(): Promise<PassengerProfile[]>;

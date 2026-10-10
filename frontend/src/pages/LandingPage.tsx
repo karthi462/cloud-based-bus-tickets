@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import {
   Bus,
@@ -9,18 +8,17 @@ import {
   Cloud,
   ShieldCheck,
   ArrowRight,
-  UserCheck,
-  Activity,
-  Layers,
   Sparkles,
   Zap,
+  MapPin,
+  Clock,
+  Shield,
+  Activity,
+  ChevronRight,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
   const [healthStatus, setHealthStatus] = useState<any>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState<string | null>(null);
 
   useEffect(() => {
     api
@@ -29,253 +27,155 @@ export const LandingPage: React.FC = () => {
       .catch(() => setHealthStatus({ status: 'OFFLINE' }));
   }, []);
 
-  const handleQuickLogin = async (role: 'PASSENGER' | 'CONDUCTOR' | 'ADMIN', creds: any, label: string) => {
-    setIsLoggingIn(label);
-    try {
-      let endpoint = '/auth/login/passenger';
-      if (role === 'CONDUCTOR') endpoint = '/auth/login/conductor';
-      if (role === 'ADMIN') endpoint = '/auth/login/admin';
-
-      const res = await api.post(endpoint, creds);
-      if (res.success && res.token) {
-        login(res.token, res.user);
-        if (role === 'ADMIN') navigate('/admin');
-        else if (role === 'CONDUCTOR') navigate('/conductor');
-        else navigate('/passenger');
-      }
-    } catch (err: any) {
-      alert(err.message || 'Quick login failed');
-    } finally {
-      setIsLoggingIn(null);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-navy-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-navy-950">
+    <div className="min-h-screen bg-navy-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-navy-950 relative overflow-hidden">
+      {/* Cinematic Smart City Highway Background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-35 mix-blend-screen pointer-events-none"
+        style={{ backgroundImage: `url('/assets/backgrounds/smart-city-highway.jpg')` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/80 via-navy-950/90 to-navy-950 pointer-events-none" />
+
       {/* Hero Section */}
-      <div className="relative overflow-hidden pt-12 pb-20 border-b border-slate-800/80">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(12,142,233,0.25),rgba(255,255,255,0))]" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="relative z-10 pt-16 pb-24 border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-3xl mx-auto">
             {/* System Cloud Badge */}
-            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/80 text-xs font-mono text-cyan-400 mb-6 shadow-inner">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md border border-cyan-700/50 text-xs font-mono text-cyan-400 mb-6 shadow-xl">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>AWS Cloud Serverless Architecture</span>
+              <span>Smart Biometric Transit Cloud</span>
               <span className="text-slate-500">|</span>
-              <span>{healthStatus?.mode || 'Local Persistent Mode'}</span>
+              <span>{healthStatus?.status === 'ONLINE' ? 'Systems Active' : 'Connecting...'}</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
               CloudBus{' '}
-              <span className="bg-gradient-to-r from-cyan-400 via-brand-400 to-brand-300 bg-clip-text text-transparent">
-                Transit System
+              <span className="bg-gradient-to-r from-cyan-400 via-brand-400 to-emerald-400 bg-clip-text text-transparent">
+                Transit Network
               </span>
             </h1>
-            <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed font-normal">
-              Next-generation cloud-native transit platform with WebAuthn & biometric authentication, role-based operations, digital wallets, and automated emergency travel credit.
+            <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed font-normal max-w-2xl mx-auto">
+              Touch-to-ride smart ticketing with Aadhaar biometric validation, contactless digital wallet deductions, and automatic emergency travel credit safety net.
             </p>
 
-            {/* Main Action CTAs */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            {/* Main Role Portals Navigation Cards */}
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
+              {/* Passenger Card */}
               <Link
                 to="/passenger/login"
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 text-white font-semibold shadow-lg shadow-cyan-600/30 transition transform hover:-translate-y-0.5 flex items-center space-x-2"
+                className="group p-5 rounded-2xl bg-navy-900/80 backdrop-blur-xl border border-slate-800 hover:border-cyan-500/80 shadow-2xl transition transform hover:-translate-y-1 flex flex-col justify-between"
               >
-                <span>Passenger Portal</span>
-                <ArrowRight className="w-4 h-4" />
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/50 flex items-center justify-center text-cyan-400 mb-3 group-hover:scale-110 transition">
+                    <Fingerprint className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-white text-base">Passenger Portal</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Manage transit wallet, view Aadhaar pass, and track emergency travel credit.
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center text-xs font-semibold text-cyan-400 group-hover:text-cyan-300">
+                  <span>Sign in as Commuter</span>
+                  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition" />
+                </div>
               </Link>
+
+              {/* Conductor Card */}
               <Link
                 to="/conductor/login"
-                className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-semibold border border-amber-800/60 transition flex items-center space-x-2"
+                className="group p-5 rounded-2xl bg-navy-900/80 backdrop-blur-xl border border-slate-800 hover:border-amber-500/80 shadow-2xl transition transform hover:-translate-y-1 flex flex-col justify-between"
               >
-                <span>Conductor Terminal</span>
-                <ArrowRight className="w-4 h-4" />
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/50 flex items-center justify-center text-amber-400 mb-3 group-hover:scale-110 transition">
+                    <Bus className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-white text-base">Conductor Terminal</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Touch-to-Identify biometric scanner and 3-tap rapid ticket issuance.
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center text-xs font-semibold text-amber-400 group-hover:text-amber-300">
+                  <span>Access Terminal</span>
+                  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition" />
+                </div>
               </Link>
+
+              {/* Admin Card */}
               <Link
                 to="/admin/login"
-                className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-purple-300 font-semibold border border-purple-800/60 transition flex items-center space-x-2"
+                className="group p-5 rounded-2xl bg-navy-900/80 backdrop-blur-xl border border-slate-800 hover:border-purple-500/80 shadow-2xl transition transform hover:-translate-y-1 flex flex-col justify-between"
               >
-                <span>Admin Console</span>
-                <ArrowRight className="w-4 h-4" />
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/50 flex items-center justify-center text-purple-400 mb-3 group-hover:scale-110 transition">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-white text-base">Authority Console</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Transit telemetry, fare matrix, route configuration, and security audits.
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center text-xs font-semibold text-purple-400 group-hover:text-purple-300">
+                  <span>Administrator Sign In</span>
+                  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition" />
+                </div>
               </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Classroom Demo 1-Click Access Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center">
-              <Sparkles className="w-5 h-5 text-amber-400 mr-2" />
-              Academic Demo & One-Click Portals
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Instantly test and inspect distinct user roles and scenarios without manual password entry.
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center space-x-2 text-xs text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Pre-seeded test scenarios loaded</span>
-          </div>
+      {/* Feature Highlights Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex-1 relative z-10">
+        <div className="text-center max-w-xl mx-auto mb-10">
+          <h2 className="text-2xl font-black text-white">Engineering Innovations</h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Built for scale, fault tolerance, and everyday commuter convenience.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Passenger Cards */}
-          <div className="bg-navy-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-cyan-500/50 transition">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-                  PASSENGER #1
-                </span>
-                <CreditCard className="w-5 h-5 text-cyan-400" />
-              </div>
-              <h3 className="font-bold text-white text-base">Karthick Ramanathan</h3>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">CB-PASS-1001 (Funded)</p>
-              <div className="mt-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs space-y-1">
-                <div className="flex justify-between text-slate-300">
-                  <span>Wallet Balance:</span>
-                  <strong className="text-emerald-400 font-bold">₹100</strong>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Emergency Credit:</span>
-                  <strong className="text-slate-400">₹0 / ₹200</strong>
-                </div>
-                <div className="text-[11px] text-cyan-300 pt-1 border-t border-slate-700/40">
-                  Scenario: Standard travel with wallet balance deduction.
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() =>
-                handleQuickLogin('PASSENGER', { email: 'passenger@cloudbus.com', password: 'pass123' }, 'P1')
-              }
-              disabled={isLoggingIn === 'P1'}
-              className="mt-4 w-full py-2 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition"
-            >
-              {isLoggingIn === 'P1' ? 'Authenticating...' : 'Sign In as Passenger #1'}
-            </button>
-          </div>
-
-          {/* Passenger Emergency Credit Card */}
-          <div className="bg-navy-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-amber-500/50 transition">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-950 text-amber-400 border border-amber-800/60">
-                  PASSENGER #2 (EMERGENCY)
-                </span>
-                <Zap className="w-5 h-5 text-amber-400" />
-              </div>
-              <h3 className="font-bold text-white text-base">Vikram Singh</h3>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">CB-PASS-1002 (Zero Balance)</p>
-              <div className="mt-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs space-y-1">
-                <div className="flex justify-between text-slate-300">
-                  <span>Wallet Balance:</span>
-                  <strong className="text-rose-400 font-bold">₹0</strong>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Available Credit:</span>
-                  <strong className="text-amber-400 font-bold">₹200 Available</strong>
-                </div>
-                <div className="text-[11px] text-amber-300 pt-1 border-t border-slate-700/40">
-                  Scenario: Zero balance automatically advances emergency travel credit.
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() =>
-                handleQuickLogin('PASSENGER', { email: 'emergency@cloudbus.com', password: 'pass123' }, 'P2')
-              }
-              disabled={isLoggingIn === 'P2'}
-              className="mt-4 w-full py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition"
-            >
-              {isLoggingIn === 'P2' ? 'Authenticating...' : 'Sign In as Passenger #2'}
-            </button>
-          </div>
-
-          {/* Conductor Card */}
-          <div className="bg-navy-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-indigo-500/50 transition">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800/60">
-                  CONDUCTOR TERMINAL
-                </span>
-                <Bus className="w-5 h-5 text-indigo-400" />
-              </div>
-              <h3 className="font-bold text-white text-base">Rajesh Kumar</h3>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">CB-EMP-2001</p>
-              <div className="mt-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs space-y-1">
-                <div className="flex justify-between text-slate-300">
-                  <span>Assigned Bus:</span>
-                  <strong className="text-white font-mono">KA-01-F-4022</strong>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Route:</span>
-                  <strong className="text-cyan-300">R-101 (Majestic - E-City)</strong>
-                </div>
-                <div className="text-[11px] text-indigo-300 pt-1 border-t border-slate-700/40">
-                  Generates tickets with biometric scan & validates QR passes.
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() =>
-                handleQuickLogin('CONDUCTOR', { employeeId: 'CB-EMP-2001', password: 'conductor123' }, 'C1')
-              }
-              disabled={isLoggingIn === 'C1'}
-              className="mt-4 w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition"
-            >
-              {isLoggingIn === 'C1' ? 'Authenticating...' : 'Launch Conductor Terminal'}
-            </button>
-          </div>
-        </div>
-
-        {/* Feature Highlights Grid */}
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-5 rounded-2xl bg-navy-900/60 border border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-5 rounded-2xl bg-navy-900/70 backdrop-blur-md border border-slate-800/80 hover:border-slate-700 transition">
             <Fingerprint className="w-8 h-8 text-cyan-400 mb-3" />
-            <h4 className="font-bold text-white text-sm">Biometric Authentication</h4>
+            <h4 className="font-bold text-white text-sm">Aadhaar Touch-ID Biometrics</h4>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Standard WebAuthn passkey protocol and classroom simulation. Zero raw fingerprint images stored.
+              1:N Touch-to-Identify matches ridge minutiae in milliseconds. Zero raw biological images stored.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-navy-900/60 border border-slate-800">
-            <CreditCard className="w-8 h-8 text-amber-400 mb-3" />
+          <div className="p-5 rounded-2xl bg-navy-900/70 backdrop-blur-md border border-slate-800/80 hover:border-slate-700 transition">
+            <Zap className="w-8 h-8 text-amber-400 mb-3" />
             <h4 className="font-bold text-white text-sm">Emergency Travel Credit</h4>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Configurable travel credit safety net (₹200 limit) for passengers when wallet balance is insufficient.
+              Automated safety net with a configurable ₹200 buffer so stranded passengers can always reach home safely.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-navy-900/60 border border-slate-800">
+          <div className="p-5 rounded-2xl bg-navy-900/70 backdrop-blur-md border border-slate-800/80 hover:border-slate-700 transition">
             <ShieldCheck className="w-8 h-8 text-emerald-400 mb-3" />
-            <h4 className="font-bold text-white text-sm">Verifiable QR Ticketing</h4>
+            <h4 className="font-bold text-white text-sm">Verifiable QR Passes</h4>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Cryptographically signed HMAC-SHA256 digital tickets with anti-tamper and duplicate validation checks.
+              HMAC-SHA256 digitally signed bus tickets with anti-tamper validation and duplicate use prevention.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-navy-900/60 border border-slate-800">
+          <div className="p-5 rounded-2xl bg-navy-900/70 backdrop-blur-md border border-slate-800/80 hover:border-slate-700 transition">
             <Cloud className="w-8 h-8 text-purple-400 mb-3" />
-            <h4 className="font-bold text-white text-sm">AWS Serverless Architecture</h4>
+            <h4 className="font-bold text-white text-sm">AWS Cloud Native</h4>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Built for API Gateway, AWS Lambda, DynamoDB transactional writes, CloudWatch, and S3/CloudFront.
+              Designed for Amazon API Gateway, AWS Lambda serverless execution, and Amazon DynamoDB transactional persistence.
             </p>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-6 bg-navy-900/40 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-800/80 py-6 bg-navy-900/60 backdrop-blur-md text-center text-xs text-slate-500 relative z-10">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between">
-          <p>© 2026 CloudBus — Smart Fingerprint Ticketing & Travel Credit System. Academic Project.</p>
-          <div className="flex space-x-4 mt-2 sm:mt-0 text-slate-400">
-            <Link to="/admin/login" className="hover:text-cyan-400">Admin Login</Link>
-            <Link to="/conductor/login" className="hover:text-cyan-400">Conductor Login</Link>
-            <Link to="/passenger/login" className="hover:text-cyan-400">Passenger Login</Link>
+          <p>© 2026 CloudBus — Smart Fingerprint Ticketing & Travel Credit System.</p>
+          <div className="flex space-x-6 mt-2 sm:mt-0 text-slate-400">
+            <Link to="/passenger/login" className="hover:text-cyan-400">Passenger</Link>
+            <Link to="/conductor/login" className="hover:text-amber-400">Conductor</Link>
+            <Link to="/admin/login" className="hover:text-purple-400">Administrator</Link>
           </div>
         </div>
       </footer>

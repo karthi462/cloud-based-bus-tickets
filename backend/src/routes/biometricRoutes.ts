@@ -17,4 +17,8 @@ router.get('/demo-challenge/:passengerId', BiometricController.getDemoChallenge)
 router.post('/demo-verify', BiometricController.verifyDemoScan);
 router.post('/demo-enrol', authenticateJwt, BiometricController.enrolDemoBiometric);
 
+// 1:N Touch-to-Identify Fingerprint Resolution (Touch finger on sensor -> fetch passenger + Aadhaar info)
+router.post('/touch-identify', BiometricController.touchIdentify);
+router.get('/enrolled-templates', BiometricController.listEnrolledTemplates);
+
 export default router;

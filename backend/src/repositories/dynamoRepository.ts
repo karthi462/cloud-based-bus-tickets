@@ -108,6 +108,29 @@ export class DynamoRepository implements IRepository {
     return res.Items && res.Items.length > 0 ? (res.Items[0] as PassengerProfile) : null;
   }
 
+  async getPassengerProfileByFingerprint(templateId: string): Promise<PassengerProfile | null> {
+    const res = await this.docClient.send(
+      new ScanCommand({
+        TableName: this.table('PassengerProfiles'),
+        FilterExpression: 'fingerprintTemplateId = :fid',
+        ExpressionAttributeValues: { ':fid': templateId },
+      })
+    );
+    return res.Items && res.Items.length > 0 ? (res.Items[0] as PassengerProfile) : null;
+  }
+
+  async getPassengerProfileByAadhaar(aadhaarNumber: string): Promise<PassengerProfile | null> {
+    const cleaned = aadhaarNumber.replace(/\s+/g, '');
+    const res = await this.docClient.send(
+      new ScanCommand({
+        TableName: this.table('PassengerProfiles'),
+        FilterExpression: 'replace(aadhaarNumber, :space, :empty) = :aid OR aadhaarNumber = :rawAid',
+        ExpressionAttributeValues: { ':aid': cleaned, ':rawAid': aadhaarNumber, ':space': ' ', ':empty': '' },
+      })
+    );
+    return res.Items && res.Items.length > 0 ? (res.Items[0] as PassengerProfile) : null;
+  }
+
   async createPassengerProfile(profile: PassengerProfile): Promise<PassengerProfile> {
     await this.docClient.send(
       new PutCommand({ TableName: this.table('PassengerProfiles'), Item: profile })

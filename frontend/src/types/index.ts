@@ -6,10 +6,51 @@ export interface User {
   role: UserRole;
   fullName?: string;
   passengerId?: string;
+  aadhaarNumber?: string;
+  aadhaarVerified?: boolean;
+  gender?: string;
+  city?: string;
+  fingerprintTemplateId?: string;
   employeeId?: string;
   assignedBusId?: string;
   assignedRouteId?: string;
   biometricEnrolled?: boolean;
+}
+
+export interface PassengerProfile {
+  userId: string;
+  passengerId: string;
+  fullName: string;
+  email: string;
+  mobileNumber: string;
+  dateOfBirth?: string;
+  emergencyContact?: string;
+  aadhaarNumber?: string;
+  aadhaarVerified?: boolean;
+  gender?: string;
+  city?: string;
+  fingerprintTemplateId?: string;
+  biometricEnrolled: boolean;
+  biometricType?: 'WEBAUTHN' | 'SIMULATED';
+  termsConsent: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TouchIdentifyPassenger {
+  passengerId: string;
+  fullName: string;
+  email: string;
+  mobileNumber: string;
+  aadhaarNumber?: string;
+  aadhaarVerified?: boolean;
+  gender?: string;
+  city?: string;
+  fingerprintTemplateId?: string;
+  walletBalance: number;
+  outstandingCredit: number;
+  availableCredit: number;
+  creditLimit: number;
 }
 
 export interface Wallet {

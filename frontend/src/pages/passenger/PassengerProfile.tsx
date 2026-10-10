@@ -127,8 +127,22 @@ export const PassengerProfile: React.FC = () => {
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <span className="text-[10px] text-slate-400 block">Linked Aadhaar Card Number</span>
+            <span className="font-mono font-bold text-cyan-300 text-sm mt-0.5 block">
+              {user?.aadhaarNumber || '5489 1234 1001'}
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <span className="text-[10px] text-slate-400 block">Biometric Fingerprint Template</span>
+            <span className="font-mono font-semibold text-amber-300 text-xs mt-0.5 block">
+              {user?.fingerprintTemplateId || 'FP-THUMB-1001 (Enrolled)'}
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/50">
             <span className="text-[10px] text-slate-400 block">Account Status</span>
-            <span className="font-bold text-emerald-400 mt-0.5 block">ACTIVE / VERIFIED</span>
+            <span className="font-bold text-emerald-400 mt-0.5 block">ACTIVE / AADHAAR VERIFIED</span>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import type { Driver, Bus, Route, RouteStop, Ticket } from '../../types';
+import type { Driver, Bus, Route, Ticket, TouchIdentifyPassenger } from '../../types';
 import { DemoFingerprintModal } from '../../components/DemoFingerprintModal';
 import { DigitalTicketModal } from '../../components/DigitalTicketModal';
 import {
@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   RefreshCw,
   QrCode,
+  Sparkles,
 } from 'lucide-react';
 
 export const ConductorTicketGenerator: React.FC = () => {
@@ -30,11 +31,10 @@ export const ConductorTicketGenerator: React.FC = () => {
   const [selectedBusNumber, setSelectedBusNumber] = useState<string>('');
   const [selectedRouteId, setSelectedRouteId] = useState<string>('');
 
-  // Passenger & Authentication
-  const [passengerId, setPassengerId] = useState<string>('CB-PASS-1001');
+  // Passenger & Fingerprint Biometric Identification
   const [isAuthVerified, setIsAuthVerified] = useState<boolean>(false);
   const [authProof, setAuthProof] = useState<string>('');
-  const [passengerData, setPassengerData] = useState<any>(null);
+  const [passengerData, setPassengerData] = useState<TouchIdentifyPassenger | null>(null);
   const [showDemoBioModal, setShowDemoBioModal] = useState<boolean>(false);
 
   // Stops & Fare
@@ -112,6 +112,7 @@ export const ConductorTicketGenerator: React.FC = () => {
   const activeRoute = routes.find((r) => r.routeId === selectedRouteId);
   const routeStops = activeRoute?.stops || [];
 
+  // 1:N Biometric Scan Callback: Receives automatically identified passenger profile and Aadhaar info
   const handleBiometricSuccess = (pData: any, proof: string) => {
     setIsAuthVerified(true);
     setAuthProof(proof);
@@ -120,8 +121,8 @@ export const ConductorTicketGenerator: React.FC = () => {
 
   const handleIssueTicket = async () => {
     setGenerationError('');
-    if (!isAuthVerified) {
-      setGenerationError('Passenger biometric authentication must be verified before issuing ticket');
+    if (!isAuthVerified || !passengerData) {
+      setGenerationError('Passenger must place finger on biometric scanner before issuing ticket');
       return;
     }
     if (!farePreview) {
@@ -137,7 +138,7 @@ export const ConductorTicketGenerator: React.FC = () => {
         driverId: selectedDriverId,
         busNumber: selectedBusNumber,
         routeId: selectedRouteId,
-        passengerId,
+        passengerId: passengerData.passengerId,
         boardingStopId,
         destinationStopId,
         authVerified: true,
@@ -147,8 +148,8 @@ export const ConductorTicketGenerator: React.FC = () => {
 
       if (res.success && res.ticket) {
         setGeneratedTicket(res.ticket);
-        // Refresh passenger data to reflect new wallet/credit balance
-        api.get(`/conductor/lookup-passenger/${passengerId}`).then((r) => {
+        // Refresh passenger data to reflect updated wallet or credit
+        api.get(`/conductor/lookup-passenger/${passengerData.passengerId}`).then((r) => {
           if (r.success) setPassengerData(r.passenger);
         });
       } else {
@@ -178,7 +179,7 @@ export const ConductorTicketGenerator: React.FC = () => {
         </div>
         <h1 className="text-3xl font-black text-white">Issue Transit Ticket</h1>
         <p className="text-xs text-slate-400 mt-0.5">
-          Step-by-step biometric validation, route fare calculation, and atomic ticket generation.
+          Biometric Fingerprint Scan Only — Auto-fetches Aadhaar, passenger identity, and digital wallet
         </p>
       </div>
 
@@ -247,12 +248,12 @@ export const ConductorTicketGenerator: React.FC = () => {
             </div>
           </div>
 
-          {/* Step 2: Passenger Biometric Authentication */}
+          {/* Step 2: Passenger Biometric Touch-to-Identify (Fingerprint Only) */}
           <div className="p-5 rounded-2xl bg-navy-900 border border-slate-800 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 text-white font-bold text-sm">
                 <span className="w-6 h-6 rounded-full bg-cyan-600 text-white flex items-center justify-center text-xs">2</span>
-                <span>Passenger Biometric Verification</span>
+                <span>Passenger Biometric Scan (Fingerprint Only)</span>
               </div>
               {isAuthVerified && (
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-bold flex items-center space-x-1">
@@ -262,73 +263,66 @@ export const ConductorTicketGenerator: React.FC = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="block text-[11px] text-slate-400 font-semibold mb-1">Passenger ID</label>
-                <input
-                  type="text"
-                  value={passengerId}
-                  onChange={(e) => {
-                    setPassengerId(e.target.value);
-                    setIsAuthVerified(false);
-                    setPassengerData(null);
-                  }}
-                  placeholder="e.g. CB-PASS-1001"
-                  className="w-full py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-cyan-500"
-                />
-              </div>
+            {/* Touch-to-Identify Biometric Terminal Panel */}
+            <div className="p-5 rounded-xl bg-slate-900/80 border-2 border-dashed border-cyan-500/40 text-center space-y-3">
+              {passengerData ? (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 bg-emerald-950/40 border border-emerald-800/80 rounded-xl text-left">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded-xl bg-cyan-600/20 border border-cyan-500 flex items-center justify-center text-cyan-300">
+                        <Fingerprint className="w-7 h-7" />
+                      </div>
+                      <div>
+                        <div className="text-white font-bold text-sm flex items-center space-x-2">
+                          <span>{passengerData.fullName}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono">
+                            {passengerData.passengerId}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-300 flex items-center space-x-1.5 mt-0.5">
+                          <CreditCard className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Aadhaar: <strong className="text-white font-mono">{passengerData.aadhaarNumber || '5489 1234 1001'}</strong></span>
+                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-800">
+                            Verified
+                          </span>
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={() => setShowDemoBioModal(true)}
-                  className={`w-full py-2 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-2 shadow-md ${
-                    isAuthVerified
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-600/30'
-                      : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-cyan-600/30'
-                  }`}
-                >
-                  <Fingerprint className="w-4 h-4" />
-                  <span>{isAuthVerified ? 'Re-scan Fingerprint' : 'Simulate Biometric Scan'}</span>
-                </button>
-              </div>
-            </div>
+                    <div className="mt-3 sm:mt-0 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setShowDemoBioModal(true)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Scan Another Passenger</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 py-2">
+                  <div className="mx-auto w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400 shadow-lg">
+                    <Fingerprint className="w-10 h-10 animate-pulse text-cyan-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">No Passenger ID Required</h4>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto mt-0.5">
+                      Passenger touches the biometric scanner. The system matches the fingerprint against Aadhaar records to automatically fetch their profile and balance.
+                    </p>
+                  </div>
 
-            {/* Quick Passenger Selector for Classroom Test */}
-            <div className="pt-2 border-t border-slate-800/80 flex items-center space-x-2 text-[11px]">
-              <span className="text-slate-500">Quick Test Passenger:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setPassengerId('CB-PASS-1001');
-                  setIsAuthVerified(false);
-                }}
-                className="text-cyan-400 hover:underline font-mono"
-              >
-                CB-PASS-1001 (Funded)
-              </button>
-              <span className="text-slate-600">|</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setPassengerId('CB-PASS-1002');
-                  setIsAuthVerified(false);
-                }}
-                className="text-amber-400 hover:underline font-mono"
-              >
-                CB-PASS-1002 (Zero Bal)
-              </button>
-              <span className="text-slate-600">|</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setPassengerId('CB-PASS-1003');
-                  setIsAuthVerified(false);
-                }}
-                className="text-rose-400 hover:underline font-mono"
-              >
-                CB-PASS-1003 (₹190 Owed)
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDemoBioModal(true)}
+                    className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 transition transform hover:-translate-y-0.5"
+                  >
+                    <Fingerprint className="w-4 h-4" />
+                    <span>Touch Biometric Sensor to Scan</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -394,6 +388,10 @@ export const ConductorTicketGenerator: React.FC = () => {
                     <strong className="text-white">{passengerData.fullName}</strong>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-slate-400">Aadhaar Linked:</span>
+                    <strong className="text-cyan-300 font-mono">{passengerData.aadhaarNumber || 'Verified'}</strong>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-slate-400">Wallet Balance:</span>
                     <strong className="text-emerald-400 font-bold">₹{passengerData.walletBalance}</strong>
                   </div>
@@ -408,7 +406,7 @@ export const ConductorTicketGenerator: React.FC = () => {
                 </>
               ) : (
                 <p className="text-slate-500 text-[11px]">
-                  Authenticate passenger to inspect wallet balance and credit eligibility.
+                  Place finger on scanner to inspect wallet balance and emergency credit.
                 </p>
               )}
             </div>
@@ -439,8 +437,8 @@ export const ConductorTicketGenerator: React.FC = () => {
                 className={`p-3 rounded-xl border text-xs leading-normal ${
                   willUseCredit
                     ? creditSufficient
-                      ? 'bg-amber-950/60 border-amber-800 text-amber-300'
-                      : 'bg-rose-950/60 border-rose-800 text-rose-300'
+                    ? 'bg-amber-950/60 border-amber-800 text-amber-300'
+                    : 'bg-rose-950/60 border-rose-800 text-rose-300'
                     : 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
                 }`}
               >
@@ -481,11 +479,10 @@ export const ConductorTicketGenerator: React.FC = () => {
         </div>
       </div>
 
-      {/* Demo Fingerprint Modal */}
+      {/* 1:N Touch-to-Identify Fingerprint Modal */}
       <DemoFingerprintModal
         isOpen={showDemoBioModal}
         onClose={() => setShowDemoBioModal(false)}
-        passengerId={passengerId}
         onVerificationSuccess={handleBiometricSuccess}
       />
 

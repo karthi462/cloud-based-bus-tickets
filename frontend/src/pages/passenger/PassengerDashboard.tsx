@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import type { Wallet, CreditAccount, Ticket, WalletTransaction } from '../../types';
+import type { Wallet, CreditAccount, Ticket } from '../../types';
 import { DigitalTicketModal } from '../../components/DigitalTicketModal';
 import {
   CreditCard,
@@ -10,12 +10,14 @@ import {
   Fingerprint,
   QrCode,
   ArrowUpRight,
-  Clock,
-  MapPin,
-  CheckCircle,
-  AlertCircle,
   ChevronRight,
   ShieldCheck,
+  CheckCircle,
+  AlertCircle,
+  Sparkles,
+  Smartphone,
+  Gauge,
+  PlusCircle,
 } from 'lucide-react';
 
 export const PassengerDashboard: React.FC = () => {
@@ -23,34 +25,42 @@ export const PassengerDashboard: React.FC = () => {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [credit, setCredit] = useState<CreditAccount | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [quickAmountNotice, setQuickAmountNotice] = useState<string>('');
 
   useEffect(() => {
-    fetchData();
+    fetchDashboardData();
   }, []);
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchDashboardData = async () => {
     try {
-      const [walletRes, ticketsRes] = await Promise.all([
-        api.get('/wallet/details'),
-        api.get('/tickets'),
+      const [walletRes, creditRes, ticketsRes] = await Promise.all([
+        api.get('/wallet/balance'),
+        api.get('/credit/account'),
+        api.get('/tickets/my-tickets'),
       ]);
 
-      if (walletRes.success) {
-        setWallet(walletRes.wallet);
-        setCredit(walletRes.creditAccount);
-        setTransactions(walletRes.recentTransactions || []);
-      }
-      if (ticketsRes.success) {
-        setTickets(ticketsRes.tickets || []);
-      }
+      if (walletRes.success) setWallet(walletRes.wallet);
+      if (creditRes.success) setCredit(creditRes.creditAccount);
+      if (ticketsRes.success) setTickets(ticketsRes.tickets || []);
     } catch (err) {
-      console.error('Failed to load passenger dashboard', err);
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to load passenger dashboard data', err);
+    }
+  };
+
+  const handleQuickAdd = async (amount: number) => {
+    try {
+      const res = await api.post('/wallet/add-money', {
+        amount,
+        paymentReference: `UPI-QUICK-${Date.now()}`,
+      });
+      if (res.success) {
+        setQuickAmountNotice(`₹${amount} added successfully via UPI!`);
+        setTimeout(() => setQuickAmountNotice(''), 3000);
+        fetchDashboardData();
+      }
+    } catch (err: any) {
+      alert(err.message || 'Quick top-up failed');
     }
   };
 
@@ -59,9 +69,15 @@ export const PassengerDashboard: React.FC = () => {
     : 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in relative">
+      {/* Background with Biometric Aurora glassmorphism */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center opacity-15 pointer-events-none -z-10"
+        style={{ backgroundImage: `url('/assets/backgrounds/biometric-aurora.jpg')` }}
+      />
+
       {/* Top Welcome Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-navy-900 via-slate-900 to-navy-900 border border-slate-800 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-navy-900/90 via-slate-900/90 to-navy-900/90 backdrop-blur-xl border border-slate-800 shadow-xl">
         <div>
           <div className="flex items-center space-x-2 text-xs font-mono text-cyan-400 mb-1">
             <span>PASSENGER ID:</span>
@@ -71,17 +87,17 @@ export const PassengerDashboard: React.FC = () => {
           </div>
           <h1 className="text-2xl font-black text-white">Welcome back, {user?.fullName || 'Passenger'}</h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Smart transit card & biometric fare pass active across metropolitan transit network.
+            Aadhaar Smart Card & Biometric Transit Pass Active
           </p>
         </div>
 
         <div className="flex items-center space-x-3">
           <Link
             to="/passenger/wallet"
-            className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/30 transition flex items-center space-x-1.5"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/30 transition flex items-center space-x-1.5"
           >
             <CreditCard className="w-4 h-4" />
-            <span>Top Up Wallet</span>
+            <span>Transit Wallet</span>
           </Link>
           <Link
             to="/passenger/profile"
@@ -93,108 +109,147 @@ export const PassengerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Balances Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Wallet Balance Card */}
-        <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-cyan-500/50 transition">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Digital Transit Wallet</span>
-            <div className="w-9 h-9 rounded-xl bg-cyan-950 flex items-center justify-center text-cyan-400 border border-cyan-800/60">
-              <CreditCard className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-baseline space-x-1">
-            <span className="text-3xl font-black text-white">₹{wallet?.balance ?? 0}</span>
-            <span className="text-xs text-slate-400">INR</span>
-          </div>
-          <p className="text-xs text-slate-400 mt-2">Deducted automatically during bus ticket generation.</p>
-          <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
-            <Link to="/passenger/wallet" className="text-cyan-400 hover:underline font-semibold flex items-center">
-              <span>Manage Wallet</span>
-              <ChevronRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-            <span className="text-emerald-400 font-medium">Ready for travel</span>
-          </div>
+      {quickAmountNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-semibold flex items-center space-x-2 animate-bounce">
+          <CheckCircle className="w-4 h-4 text-emerald-400" />
+          <span>{quickAmountNotice}</span>
         </div>
+      )}
 
-        {/* Emergency Travel Credit Card */}
-        <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-amber-500/50 transition">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Emergency Travel Credit</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-950 flex items-center justify-center text-amber-400 border border-amber-800/60">
-              <Zap className="w-5 h-5" />
+      {/* Everyday Commuter Visual Cards: Aadhaar Smart Card + Emergency Fuel Gauge */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Card 1: Aadhaar Smart Transit Card (Col span 2) */}
+        <div className="lg:col-span-2 rounded-3xl p-7 bg-gradient-to-br from-slate-900 via-navy-900 to-slate-950 border border-cyan-500/30 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[260px]">
+          {/* Subtle holographic foil strip effect */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Card Header: Indian Flag Strip + UIDAI / CloudBus Emblem */}
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-600/20 border border-cyan-500 flex items-center justify-center text-cyan-400">
+                <Fingerprint className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block">Republic of India • Transit ID</span>
+                <span className="text-sm font-black text-white tracking-wide">Aadhaar Smart Transit Pass</span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center space-x-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>e-KYC Verified</span>
+              </span>
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
+
+          {/* Card Center: Chip & Masked Aadhaar */}
+          <div className="my-3 flex items-center justify-between relative z-10">
             <div>
-              <span className="text-3xl font-black text-white">₹{credit?.outstandingCredit ?? 0}</span>
-              <span className="text-xs text-slate-400 ml-1">Owed</span>
+              <span className="text-[11px] text-slate-400 block">Aadhaar Linked Number</span>
+              <span className="text-xl sm:text-2xl font-mono font-bold text-white tracking-widest mt-0.5 block">
+                {user?.aadhaarNumber ? user.aadhaarNumber : '5489 1234 1001'}
+              </span>
+              <span className="text-xs font-semibold text-slate-300 mt-1 block">{user?.fullName || 'Karthick Ramanathan'}</span>
             </div>
+
             <div className="text-right">
-              <span className="text-xs text-amber-400 font-bold">₹{credit?.availableCredit ?? 200}</span>
-              <span className="text-[10px] text-slate-500 block">Available of ₹{credit?.maxCreditLimit ?? 200}</span>
+              <span className="text-[11px] text-slate-400 block">Live Transit Balance</span>
+              <div className="flex items-baseline justify-end space-x-1">
+                <span className="text-4xl font-black text-emerald-400">₹{wallet?.balance ?? 0}</span>
+                <span className="text-xs text-slate-400 font-mono">INR</span>
+              </div>
+              <span className="text-[10px] text-emerald-400/80 font-medium mt-0.5 block">Touch thumb on bus scanner to ride</span>
             </div>
           </div>
 
-          {/* Progress bar of credit usage */}
-          <div className="mt-3 w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-            <div
-              className={`h-2 rounded-full transition-all duration-500 ${
-                creditUsedPct > 80 ? 'bg-rose-500' : creditUsedPct > 40 ? 'bg-amber-500' : 'bg-cyan-500'
-              }`}
-              style={{ width: `${creditUsedPct}%` }}
-            />
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
-            <Link to="/passenger/credit" className="text-amber-400 hover:underline font-semibold flex items-center">
-              <span>Repay or View Limit</span>
-              <ChevronRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-            <span className="text-slate-400 text-[11px]">{100 - creditUsedPct}% limit buffer</span>
+          {/* 1-Click Quick Recharge Bar */}
+          <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 relative z-10">
+            <span className="text-xs font-bold text-slate-400 flex items-center space-x-1">
+              <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+              <span>1-Tap UPI Recharge:</span>
+            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleQuickAdd(50)}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-bold text-xs transition"
+              >
+                +₹50
+              </button>
+              <button
+                onClick={() => handleQuickAdd(100)}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-bold text-xs transition"
+              >
+                +₹100
+              </button>
+              <button
+                onClick={() => handleQuickAdd(200)}
+                className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md shadow-cyan-600/30 transition"
+              >
+                +₹200
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Biometric Status Card */}
-        <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-purple-500/50 transition">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Biometric Verification</span>
-            <div className="w-9 h-9 rounded-xl bg-purple-950 flex items-center justify-center text-purple-400 border border-purple-800/60">
-              <Fingerprint className="w-5 h-5" />
+        {/* Card 2: Emergency Travel Credit Fuel Gauge (Col span 1) */}
+        <div className="rounded-3xl p-6 bg-gradient-to-br from-navy-900 to-slate-900 border border-amber-800/40 shadow-xl flex flex-col justify-between relative overflow-hidden">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center space-x-1">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>Emergency Travel Credit</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">₹200 Max Safety Net</span>
             </div>
+
+            {/* Visual Fuel Gauge Card */}
+            <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-center my-2 space-y-2">
+              <div className="flex items-center justify-center space-x-1 text-slate-400 text-xs">
+                <Gauge className="w-4 h-4 text-cyan-400" />
+                <span>Commuter Safety Meter</span>
+              </div>
+              <div className="text-3xl font-black text-white">
+                ₹{credit?.availableCredit ?? 200}{' '}
+                <span className="text-xs text-emerald-400 font-bold">Available</span>
+              </div>
+              
+              {/* Traffic light bar */}
+              <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className={`h-2.5 rounded-full transition-all duration-500 ${
+                    creditUsedPct > 80 ? 'bg-rose-500' : creditUsedPct > 40 ? 'bg-amber-500' : 'bg-emerald-400'
+                  }`}
+                  style={{ width: `${100 - creditUsedPct}%` }}
+                />
+              </div>
+
+              <div className="flex justify-between text-[11px] text-slate-400 pt-1">
+                <span>Used: <strong className="text-amber-400">₹{credit?.outstandingCredit ?? 0}</strong></span>
+                <span>Buffer: <strong className="text-emerald-400">{100 - creditUsedPct}%</strong></span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-normal mt-2">
+              If your wallet ever runs dry, CloudBus automatically advances up to ₹200 so you are never left stranded.
+            </p>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-white">
-              {user?.biometricEnrolled ? 'Enrolled & Active' : 'Pending Enrolment'}
-            </span>
-            {user?.biometricEnrolled ? (
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-amber-400" />
-            )}
-          </div>
-
-          <p className="text-xs text-slate-400 mt-2">
-            WebAuthn Passkey + Classroom Demo Fingerprint enabled for touch-to-board ticketing.
-          </p>
-
-          <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
-            <Link to="/passenger/profile" className="text-purple-400 hover:underline font-semibold flex items-center">
-              <span>Security Settings</span>
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+            <Link to="/passenger/credit" className="text-amber-400 hover:underline font-semibold flex items-center">
+              <span>Repay or Adjust Buffer</span>
               <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Link>
-            <span className="text-cyan-400 text-[11px] font-mono">FIDO2 / WebAuthn</span>
           </div>
         </div>
       </div>
 
       {/* Recent Journeys / Tickets */}
-      <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 shadow-xl space-y-4">
+      <div className="p-6 rounded-2xl bg-navy-900/90 backdrop-blur-xl border border-slate-800 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-white">Recent Journeys & Digital Passes</h2>
-            <p className="text-xs text-slate-400">Verifiable tickets issued on operating fleet buses</p>
+            <p className="text-xs text-slate-400">Verifiable tickets issued via biometric bus touch</p>
           </div>
           <Link
             to="/passenger/tickets"
@@ -210,7 +265,7 @@ export const PassengerDashboard: React.FC = () => {
             <QrCode className="w-12 h-12 mx-auto text-slate-600 mb-2" />
             <p className="text-sm font-semibold text-slate-300">No tickets generated yet</p>
             <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Board any CloudBus and authenticate via biometric touch with the conductor to receive your digital QR pass.
+              Board any bus and touch your finger on the conductor's scanner to automatically generate your QR ticket pass.
             </p>
           </div>
         ) : (

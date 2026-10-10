@@ -46,10 +46,15 @@ export interface PassengerProfile {
   fullName: string;
   email: string;
   mobileNumber: string;
+  aadhaarNumber?: string; // 12-digit Aadhaar e-KYC reference
+  aadhaarVerified?: boolean;
+  gender?: string;
+  city?: string;
   dateOfBirth?: string;
   emergencyContact?: string;
   biometricEnrolled: boolean;
   biometricCredentialId?: string;
+  fingerprintTemplateId?: string; // Unique cryptographic biometric fingerprint hash (enables 1:N touch-to-identify)
   biometricType?: 'WEBAUTHN' | 'SIMULATED';
   termsConsent: boolean;
   createdAt: string;
@@ -129,6 +134,7 @@ export interface BiometricCredential {
   id: string;
   userId: string;
   credentialId: string;
+  fingerprintTemplateId?: string; // Fingerprint biometric identifier
   publicKey: string;
   counter: number;
   transports?: string[];

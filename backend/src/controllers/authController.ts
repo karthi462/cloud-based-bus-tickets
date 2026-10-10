@@ -12,7 +12,19 @@ export class AuthController {
    */
   static async registerPassenger(req: Request, res: Response): Promise<void> {
     try {
-      const { fullName, email, mobileNumber, password, termsConsent, dateOfBirth, emergencyContact } = req.body;
+      const {
+        fullName,
+        email,
+        mobileNumber,
+        password,
+        termsConsent,
+        dateOfBirth,
+        emergencyContact,
+        aadhaarNumber,
+        gender,
+        city,
+        fingerprintTemplateId,
+      } = req.body;
 
       if (!fullName || !email || !password || !mobileNumber) {
         res.status(400).json({ success: false, message: 'Full name, email, mobile number, and password are required' });
@@ -31,6 +43,15 @@ export class AuthController {
         return;
       }
 
+      // Check if Aadhaar is already registered
+      if (aadhaarNumber) {
+        const existingAadhaar = await repo.getPassengerProfileByAadhaar(aadhaarNumber);
+        if (existingAadhaar) {
+          res.status(409).json({ success: false, message: 'This Aadhaar card number is already linked to another passenger account' });
+          return;
+        }
+      }
+
       const userId = generateId('USR-PASS');
       const passengerId = `CB-PASS-${Math.floor(1000 + Math.random() * 9000)}`;
       const passwordHash = await hashPassword(password);
@@ -46,6 +67,9 @@ export class AuthController {
         updatedAt: now,
       });
 
+      // Default fingerprint template ID if enrolled or provided
+      const resolvedFpId = fingerprintTemplateId || `FP-BIO-${Math.floor(1000 + Math.random() * 9000)}`;
+
       const profile = await repo.createPassengerProfile({
         userId,
         passengerId,
@@ -54,7 +78,13 @@ export class AuthController {
         mobileNumber,
         dateOfBirth,
         emergencyContact,
-        biometricEnrolled: false,
+        aadhaarNumber: aadhaarNumber || undefined,
+        aadhaarVerified: !!aadhaarNumber,
+        gender: gender || 'Not Specified',
+        city: city || 'Chennai',
+        fingerprintTemplateId: resolvedFpId,
+        biometricEnrolled: true,
+        biometricType: 'SIMULATED',
         termsConsent: true,
         createdAt: now,
         updatedAt: now,

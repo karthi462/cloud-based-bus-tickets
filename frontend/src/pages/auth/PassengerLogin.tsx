@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import { Bus, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Bus, Lock, Mail, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export const PassengerLogin: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -32,33 +32,27 @@ export const PassengerLogin: React.FC = () => {
     }
   };
 
-  const handleFillDemo = (type: 'FUNDED' | 'EMERGENCY' | 'NEARLIMIT') => {
-    if (type === 'FUNDED') {
-      setEmail('passenger@cloudbus.com');
-      setPassword('pass123');
-    } else if (type === 'EMERGENCY') {
-      setEmail('emergency@cloudbus.com');
-      setPassword('pass123');
-    } else {
-      setEmail('nearlimit@cloudbus.com');
-      setPassword('pass123');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-navy-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+    <div className="min-h-screen bg-navy-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Biometric Aurora Background with deep glass tint */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-screen pointer-events-none"
+        style={{ backgroundImage: `url('/assets/backgrounds/biometric-aurora.jpg')` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/80 via-navy-950/90 to-navy-950 pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
         <Link to="/" className="inline-flex items-center space-x-2">
-          <div className="w-12 h-12 rounded-xl bg-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-600 to-brand-500 flex items-center justify-center shadow-lg shadow-cyan-500/25">
             <Bus className="w-7 h-7 text-white" />
           </div>
         </Link>
-        <h2 className="mt-4 text-3xl font-black text-white">Passenger Sign In</h2>
+        <h2 className="mt-4 text-3xl font-black text-white tracking-tight">Passenger Sign In</h2>
         <p className="mt-1 text-xs text-slate-400">Access your digital transit wallet and journey passes</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-navy-900 py-8 px-6 sm:px-10 border border-slate-800 rounded-2xl shadow-2xl">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10">
+        <div className="bg-navy-900/90 backdrop-blur-xl py-8 px-6 sm:px-10 border border-slate-800/90 rounded-2xl shadow-2xl">
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-400 text-xs flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -76,8 +70,8 @@ export const PassengerLogin: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. passenger@cloudbus.com"
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  placeholder="Enter your registered email"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                 />
               </div>
             </div>
@@ -92,7 +86,7 @@ export const PassengerLogin: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                 />
               </div>
             </div>
@@ -100,47 +94,17 @@ export const PassengerLogin: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 text-white font-semibold text-sm shadow-lg shadow-cyan-600/30 transition flex items-center justify-center space-x-2"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 text-white font-semibold text-sm shadow-lg shadow-cyan-600/30 transition flex items-center justify-center space-x-2 disabled:opacity-50"
             >
               <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          {/* Quick Demo Autofill */}
-          <div className="mt-6 pt-5 border-t border-slate-800">
-            <span className="block text-[11px] font-semibold text-slate-400 mb-2 uppercase tracking-wider text-center">
-              Quick Test Autofill
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleFillDemo('FUNDED')}
-                className="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 border border-slate-700 truncate"
-              >
-                ₹100 Wallet
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo('EMERGENCY')}
-                className="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-amber-300 border border-slate-700 truncate"
-              >
-                ₹0 Emergency
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo('NEARLIMIT')}
-                className="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-rose-300 border border-slate-700 truncate"
-              >
-                ₹190 Limit
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center text-xs text-slate-400">
+          <div className="mt-6 pt-5 border-t border-slate-800/80 text-center text-xs text-slate-400">
             New passenger?{' '}
             <Link to="/passenger/register" className="text-cyan-400 hover:underline font-semibold">
-              Create an account
+              Create an account & enrol biometrics
             </Link>
           </div>
         </div>

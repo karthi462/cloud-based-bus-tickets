@@ -198,6 +198,89 @@ export class BiometricController {
   }
 
   /**
+   * 1:N BIOMETRIC TOUCH-TO-IDENTIFY:
+   * Conductor terminal biometric sensor captures fingerprint token/minutiae hash.
+   * System scans database, automatically identifies passenger, fetches Aadhaar card details,
+   * wallet balance, and emergency travel credit eligibility without requiring manual Passenger ID typing!
+   */
+  static async touchIdentify(req: Request, res: Response): Promise<void> {
+    try {
+      const { fingerprintTemplateId, sensorScanToken } = req.body;
+      const templateId = fingerprintTemplateId || sensorScanToken;
+
+      if (!templateId) {
+        res.status(400).json({
+          success: false,
+          verified: false,
+          message: 'Biometric fingerprint scan data / template ID is required',
+        });
+        return;
+      }
+
+      const repo = getRepository();
+      const profile = await repo.getPassengerProfileByFingerprint(templateId);
+
+      if (!profile) {
+        res.status(404).json({
+          success: false,
+          verified: false,
+          message: `Fingerprint scan unrecognized (Template: ${templateId}). No enrolled passenger or Aadhaar biometric profile matched this scan.`,
+        });
+        return;
+      }
+
+      // Check account status
+      const user = await repo.getUserById(profile.userId);
+      if (user && user.status === 'SUSPENDED') {
+        res.status(403).json({
+          success: false,
+          verified: false,
+          message: 'Passenger account is suspended. Biometric authentication blocked.',
+        });
+        return;
+      }
+
+      // Fetch financial and credit details
+      const wallet = await repo.getWalletByPassengerId(profile.passengerId);
+      const creditAccount = await repo.getCreditAccountByPassengerId(profile.passengerId);
+
+      await AuditService.log('BIOMETRIC_TOUCH_IDENTIFY_SUCCESS', 'BIOMETRIC', {
+        passengerId: profile.passengerId,
+        templateId,
+        conductorId: req.user?.id,
+      }, {
+        userId: req.user?.id,
+        role: req.user?.role,
+        ipAddress: req.ip,
+      });
+
+      res.json({
+        success: true,
+        verified: true,
+        mode: '1:N Biometric Touch-to-Identify',
+        passenger: {
+          passengerId: profile.passengerId,
+          fullName: profile.fullName,
+          email: profile.email,
+          mobileNumber: profile.mobileNumber,
+          aadhaarNumber: profile.aadhaarNumber,
+          aadhaarVerified: profile.aadhaarVerified ?? true,
+          gender: profile.gender,
+          city: profile.city,
+          fingerprintTemplateId: profile.fingerprintTemplateId,
+          walletBalance: wallet?.balance ?? 0,
+          outstandingCredit: creditAccount?.outstandingCredit ?? 0,
+          availableCredit: creditAccount?.availableCredit ?? 200,
+          creditLimit: creditAccount?.maxCreditLimit ?? 200,
+        },
+        message: `Biometric match confirmed: ${profile.fullName} (Aadhaar: ${profile.aadhaarNumber || 'Verified'})`,
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, verified: false, message: err.message });
+    }
+  }
+
+  /**
    * Enrol Demo Biometric status for passenger
    */
   static async enrolDemoBiometric(req: Request, res: Response): Promise<void> {
@@ -225,6 +308,25 @@ export class BiometricController {
         message: 'Demo fingerprint profile enrolled successfully',
         profile: updated,
       });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
+  /**
+   * List enrolled biometric passengers for demo convenience in testing
+   */
+  static async listEnrolledTemplates(req: Request, res: Response): Promise<void> {
+    try {
+      const repo = getRepository();
+      const profiles = await repo.listPassengerProfiles();
+      const enrolled = profiles.filter((p) => p.fingerprintTemplateId).map((p) => ({
+        fingerprintTemplateId: p.fingerprintTemplateId,
+        passengerId: p.passengerId,
+        fullName: p.fullName,
+        aadhaarNumber: p.aadhaarNumber,
+      }));
+      res.json({ success: true, enrolled });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message });
     }
