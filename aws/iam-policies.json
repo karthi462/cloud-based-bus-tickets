@@ -1,0 +1,50 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DynamoDBTableAccessLeastPrivilege",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:*:*:table/CloudBus_*",
+        "arn:aws:dynamodb:*:*:table/CloudBus_*/index/*"
+      ]
+    },
+    {
+      "Sid": "DynamoDBTransactionControl",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:TransactWriteItems",
+        "dynamodb:TransactGetItems"
+      ],
+      "Resource": "arn:aws:dynamodb:*:*:table/CloudBus_*"
+    },
+    {
+      "Sid": "CloudWatchLogsAccess",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/CloudBus_*"
+    },
+    {
+      "Sid": "SecretsManagerReadTokenSecrets",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": "arn:aws:secretsmanager:*:*:secret:cloudbus/*"
+    }
+  ]
+}

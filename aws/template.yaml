@@ -1,0 +1,312 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CloudBus - Smart Fingerprint Ticketing & Travel Credit System
+  Serverless Architecture with AWS Lambda, API Gateway, DynamoDB, S3, and CloudFront.
+
+Globals:
+  Function:
+    Timeout: 15
+    MemorySize: 512
+    Runtime: nodejs20.x
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        NODE_ENV: production
+        USE_DYNAMODB: "true"
+        AWS_REGION: !Ref AWS::Region
+        DYNAMODB_TABLE_PREFIX: !Sub "${AWS::StackName}_"
+        JWT_SECRET: "{{resolve:secretsmanager:cloudbus/jwt-secret:SecretString:key}}"
+        TICKET_SIGN_SECRET: "{{resolve:secretsmanager:cloudbus/ticket-secret:SecretString:key}}"
+        RP_NAME: "CloudBus Transport Authority"
+        RP_ID: !Ref CustomDomainName
+        ORIGIN: !Sub "https://${CustomDomainName}"
+
+Parameters:
+  CustomDomainName:
+    Type: String
+    Default: "cloudbus.transport.gov"
+    Description: "Public domain for CloudBus CloudFront distribution and WebAuthn origin"
+
+Resources:
+  # ==========================================
+  # 1. Amazon API Gateway HTTP API
+  # ==========================================
+  CloudBusHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+          - Idempotency-Key
+        AllowOrigins:
+          - "*"
+
+  # ==========================================
+  # 2. AWS Lambda Backend API Handler
+  # ==========================================
+  CloudBusApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/dist/
+      Handler: lambda/handler.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Users"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_PassengerProfiles"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_ConductorProfiles"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Drivers"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Buses"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Routes"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Stops"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_FareRules"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_BiometricCredentials"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Wallets"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_WalletTransactions"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_CreditAccounts"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Tickets"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_WithdrawalRequests"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_Notifications"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${AWS::StackName}_AuditLogs"
+      Events:
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CloudBusHttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  # ==========================================
+  # 3. Amazon DynamoDB Tables
+  # ==========================================
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}_Users"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  PassengerProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}_PassengerProfiles"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: passengerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PassengerIdIndex
+          KeySchema:
+            - AttributeName: passengerId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  ConductorProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}_ConductorProfiles"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: employeeId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EmployeeIdIndex
+          KeySchema:
+            - AttributeName: employeeId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  WalletsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}_Wallets"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: walletId
+          AttributeType: S
+        - AttributeName: passengerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: walletId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PassengerIdIndex
+          KeySchema:
+            - AttributeName: passengerId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  CreditAccountsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}_CreditAccounts"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: creditAccountId
+          AttributeType: S
+        - AttributeName: passengerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: creditAccountId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PassengerIdIndex
+          KeySchema:
+            - AttributeName: passengerId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  TicketsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}_Tickets"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ticketId
+          AttributeType: S
+        - AttributeName: passengerId
+          AttributeType: S
+        - AttributeName: conductorEmployeeId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ticketId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PassengerIdIndex
+          KeySchema:
+            - AttributeName: passengerId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: ConductorIdIndex
+          KeySchema:
+            - AttributeName: conductorEmployeeId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  WalletTransactionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}_WalletTransactions"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: transactionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: idempotencyKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: transactionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: IdempotencyIndex
+          KeySchema:
+            - AttributeName: idempotencyKey
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # ==========================================
+  # 4. Amazon S3 & CloudFront (Frontend Hosting)
+  # ==========================================
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-frontend-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ==========================================
+  # 5. Amazon CloudWatch Log Group & Alarms
+  # ==========================================
+  CloudBusLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${CloudBusApiFunction}"
+      RetentionInDays: 30
+
+  HighErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: "Alerts when Lambda 5xx errors exceed 5 within 5 minutes"
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CloudBusApiFunction
+
+Outputs:
+  ApiEndpoint:
+    Description: "HTTP API Gateway endpoint URL"
+    Value: !Sub "https://${CloudBusHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  FrontendBucketName:
+    Description: "S3 Bucket hosting compiled frontend SPA static assets"
+    Value: !Ref FrontendBucket
