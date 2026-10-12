@@ -17,6 +17,7 @@ import { PassengerWallet } from './pages/passenger/PassengerWallet';
 import { PassengerCredit } from './pages/passenger/PassengerCredit';
 import { PassengerTickets } from './pages/passenger/PassengerTickets';
 import { PassengerProfile } from './pages/passenger/PassengerProfile';
+import { BusTracker } from './pages/passenger/BusTracker';
 
 // Conductor
 import { ConductorDashboard } from './pages/conductor/ConductorDashboard';
@@ -30,6 +31,7 @@ import { AdminEmployees } from './pages/admin/AdminEmployees';
 import { AdminFareRules } from './pages/admin/AdminFareRules';
 import { AdminWithdrawals } from './pages/admin/AdminWithdrawals';
 import { AdminAuditLogs } from './pages/admin/AdminAuditLogs';
+import { CloudHealthDashboard } from './pages/admin/CloudHealthDashboard';
 
 // Errors
 import { NotFound } from './pages/NotFound';
@@ -88,6 +90,14 @@ export const App: React.FC = () => {
                 element={
                   <ProtectedRoute allowedRoles={['PASSENGER', 'ADMIN']}>
                     <PassengerProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/passenger/track-bus"
+                element={
+                  <ProtectedRoute allowedRoles={['PASSENGER', 'ADMIN']}>
+                    <BusTracker />
                   </ProtectedRoute>
                 }
               />
@@ -164,6 +174,14 @@ export const App: React.FC = () => {
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN']}>
                     <AdminAuditLogs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/cloud-health"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <CloudHealthDashboard />
                   </ProtectedRoute>
                 }
               />

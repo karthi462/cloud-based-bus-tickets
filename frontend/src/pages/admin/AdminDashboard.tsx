@@ -15,6 +15,7 @@ import {
   Layers,
   FileText,
   DollarSign,
+  Activity,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -83,9 +84,16 @@ export const AdminDashboard: React.FC = () => {
           </Link>
           <Link
             to="/admin/audit-logs"
-            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/30 transition"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
           >
             Audit Logs
+          </Link>
+          <Link
+            to="/admin/cloud-health"
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/30 transition flex items-center space-x-1.5"
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Cloud Health</span>
           </Link>
         </div>
       </div>

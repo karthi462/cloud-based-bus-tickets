@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import type { Ticket } from '../../types';
 import { DigitalTicketModal } from '../../components/DigitalTicketModal';
+import { ConductorLocationSharing } from '../../components/ConductorLocationSharing';
 import {
   Bus,
   BadgeCheck,
@@ -119,6 +120,14 @@ export const ConductorDashboard: React.FC = () => {
           <span className="text-[11px] text-slate-500 mt-1 block">Cloud API Gateway linked</span>
         </div>
       </div>
+
+      {/* Live Location Sharing Widget */}
+      <ConductorLocationSharing
+        busId={context?.conductor?.assignedBusId || 'KA-01-F-4022'}
+        busNumber={context?.conductor?.assignedBusId || 'KA-01-F-4022'}
+        routeId={context?.conductor?.assignedRouteId || 'R-101'}
+        routeName={context?.route?.name || 'Main City Route'}
+      />
 
       {/* Recent Issued Tickets */}
       <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 shadow-xl space-y-4">

@@ -18,6 +18,7 @@ import {
   Smartphone,
   Gauge,
   PlusCircle,
+  MapPin,
 } from 'lucide-react';
 
 export const PassengerDashboard: React.FC = () => {
@@ -92,6 +93,13 @@ export const PassengerDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-3">
+          <Link
+            to="/passenger/track-bus"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/30 transition flex items-center space-x-1.5"
+          >
+            <MapPin className="w-4 h-4" />
+            <span>Track Bus</span>
+          </Link>
           <Link
             to="/passenger/wallet"
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/30 transition flex items-center space-x-1.5"

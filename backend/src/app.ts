@@ -8,6 +8,7 @@ import ticketRoutes from './routes/ticketRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import conductorRoutes from './routes/conductorRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import locationRoutes from './routes/locationRoutes.js';
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/conductor', conductorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/location', locationRoutes);
 
 // 404 Route
 app.use((req: Request, res: Response) => {
